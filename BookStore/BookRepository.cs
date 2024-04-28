@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bookstore.DAL
 {
@@ -9,38 +12,45 @@ namespace Bookstore.DAL
 
         public BookRepository(BookstoreDbContext context)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public void AddBook(Book book)
+        public async Task AddBookAsync(Book book)
         {
+            if (book == null)
+                throw new ArgumentNullException(nameof(book));
+
             _context.Books.Add(book);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void DeleteBook(int id)
+        public async Task<List<Book>> GetAllBooksAsync()
         {
-            var bookToDelete = _context.Books.Find(id);
-            if (bookToDelete != null)
+            return await _context.Books.ToListAsync();
+        }
+
+        public async Task<Book> GetBookByIdAsync(int id)
+        {
+            return await _context.Books.FindAsync(id);
+        }
+
+        public async Task UpdateBookAsync(Book book)
+        {
+            if (book == null)
+                throw new ArgumentNullException(nameof(book));
+
+            _context.Books.Update(book);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteBookAsync(int id)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book != null)
             {
-                _context.Books.Remove(bookToDelete);
-                _context.SaveChanges();
+                _context.Books.Remove(book);
+                await _context.SaveChangesAsync();
             }
-        }
-
-        public IEnumerable<Book> GetAllBooks()
-        {
-            return _context.Books.ToList();
-        }
-
-        public Book GetBookById(int id)
-        {
-            return _context.Books.Find(id);
-        }
-
-        public void UpdateBook(Book book)
-        {
-            _context.SaveChanges();
         }
     }
 }
